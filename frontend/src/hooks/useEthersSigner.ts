@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 import { useWalletClient } from 'wagmi';
-import { BrowserProvider, JsonRpcSigner, type Eip1193Provider } from 'ethers';
-import type { WalletClient } from 'viem';
+import { BrowserProvider, JsonRpcSigner } from 'ethers';
 
-function walletClientToSigner(walletClient: WalletClient): Promise<JsonRpcSigner> {
+function walletClientToSigner(walletClient: any): Promise<JsonRpcSigner> {
   const { account, chain, transport } = walletClient;
   const network = {
     chainId: chain.id,
@@ -11,8 +10,9 @@ function walletClientToSigner(walletClient: WalletClient): Promise<JsonRpcSigner
     ensAddress: chain.contracts?.ensRegistry?.address,
   };
 
-  const provider = new BrowserProvider(transport as unknown as Eip1193Provider, network);
-  return provider.getSigner(account.address);
+  const provider = new BrowserProvider(transport, network);
+  const signer = provider.getSigner(account.address);
+  return signer;
 }
 
 export function useEthersSigner({ chainId }: { chainId?: number } = {}) {
