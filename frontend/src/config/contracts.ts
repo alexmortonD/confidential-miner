@@ -1,7 +1,7 @@
 import type { Address } from 'viem';
 
-const fallbackMinerAddress = (import.meta.env.VITE_MINER_CONTRACT_ADDRESS ?? '0x0000000000000000000000000000000000000000') as Address;
-const fallbackTokenAddress = (import.meta.env.VITE_TOKEN_CONTRACT_ADDRESS ?? '0x0000000000000000000000000000000000000000') as Address;
+const fallbackMinerAddress = (import.meta.env.VITE_MINER_CONTRACT_ADDRESS ?? '0xc8792E91E7172609B17d7A325ee4ac3E56517122') as Address;
+const fallbackTokenAddress = (import.meta.env.VITE_TOKEN_CONTRACT_ADDRESS ?? '0xa0F6bf03E618227150E32b7bA0fbd696243BE8E8') as Address;
 
 export const MINER_ABI = [
   {
