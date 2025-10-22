@@ -1,0 +1,227 @@
+.miner-app {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.miner-app__placeholder {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem 2.5rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+.miner-app__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.miner-app__description {
+  margin: 0;
+  font-size: 1rem;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.miner-app__description--error {
+  color: #dc2626;
+}
+
+.section-card {
+  background: white;
+  border-radius: 18px;
+  padding: 2rem;
+  box-shadow: 0 20px 35px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.section-card--muted {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.02));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.section-card__title {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.section-card__description {
+  margin-top: 0.75rem;
+  margin-bottom: 1.5rem;
+  color: #475569;
+  line-height: 1.65;
+}
+
+.section-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.stat-card {
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-card__label {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.stat-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.stat-card__value--active {
+  color: #16a34a;
+}
+
+.stat-card__value--paused {
+  color: #dc2626;
+}
+
+.stat-card__meta {
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.primary-button,
+.secondary-button {
+  min-width: 160px;
+  padding: 0.85rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  box-shadow: 0 12px 25px rgba(37, 99, 235, 0.35);
+}
+
+.primary-button:disabled {
+  background: #94a3b8;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.primary-button:not(:disabled):hover,
+.secondary-button:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.secondary-button {
+  background: white;
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.secondary-button:disabled {
+  color: #94a3b8;
+  border-color: rgba(148, 163, 184, 0.45);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.reward-display {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 14px;
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.reward-display__label {
+  display: block;
+  font-size: 0.95rem;
+  color: #1d4ed8;
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.reward-display__value {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.feedback {
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.feedback--success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #166534;
+}
+
+.feedback--error {
+  background: rgba(248, 113, 113, 0.15);
+  color: #b91c1c;
+}
+
+.feedback--info {
+  background: rgba(96, 165, 250, 0.15);
+  color: #1d4ed8;
+}
+
+.miner-app__decrypt-error {
+  margin-top: 1rem;
+  color: #b91c1c;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 640px) {
+  .section-card {
+    padding: 1.5rem;
+  }
+
+  .reward-display {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .primary-button,
+  .secondary-button {
+    width: 100%;
+  }
+}
