@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Contract } from 'ethers';
 import { useAccount, useReadContract } from 'wagmi';
 import type { Address } from 'viem';
@@ -31,7 +31,7 @@ const normalizeHandle = (value?: string | `0x${string}`): string | null => {
     if (BigInt(normalized) === 0n) {
       return ZERO_HANDLE;
     }
-  } catch (_error) {
+  } catch {
     return normalized;
   }
 
@@ -58,8 +58,6 @@ export function MinerApp() {
   const [decryptError, setDecryptError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [txInFlight, setTxInFlight] = useState<null | 'claim' | 'start' | 'stop' | 'withdraw'>(null);
-
-  const lastDecryptionKeyRef = useRef<string | null>(null);
 
   const accountAddress = address as Address | undefined;
 
@@ -127,14 +125,7 @@ export function MinerApp() {
   const pendingHandle = normalizeHandle(snapshot?.[1]);
   const balanceHandle = normalizeHandle(balanceCipherRaw as string | undefined);
 
-  useEffect(() => {
-    if (!accountAddress || !instance) {
-      setPowerValue(null);
-      setPendingValue(null);
-      setBalanceValue(null);
-      return;
-    }
-
+  const decryptHandles = useMemo(() => {
     const handlesMap = new Map<string, { handle: string; contractAddress: Address }>();
 
     if (powerHandle && powerHandle !== ZERO_HANDLE) {
@@ -149,123 +140,107 @@ export function MinerApp() {
       handlesMap.set(balanceHandle, { handle: balanceHandle, contractAddress: TOKEN_CONTRACT.address });
     }
 
-    if (!handlesMap.size) {
-      if (powerHandle === ZERO_HANDLE) {
-        setPowerValue(0n);
-      } else if (!powerHandle) {
-        setPowerValue(null);
+    return Array.from(handlesMap.values());
+  }, [powerHandle, pendingHandle, balanceHandle]);
+
+  useEffect(() => {
+    if (!accountAddress) {
+      setPowerValue(null);
+      setPendingValue(null);
+      setBalanceValue(null);
+      setDecrypting(false);
+      setDecryptError(null);
+      return;
+    }
+
+    setPowerValue(powerHandle === ZERO_HANDLE ? 0n : null);
+    setPendingValue(pendingHandle === ZERO_HANDLE ? 0n : null);
+    setBalanceValue(!balanceHandle || balanceHandle === ZERO_HANDLE ? 0n : null);
+
+    setDecrypting(false);
+    setDecryptError(null);
+  }, [accountAddress, powerHandle, pendingHandle, balanceHandle]);
+
+  const handleDecryptValues = async () => {
+    if (!accountAddress) {
+      setDecryptError('Connect your wallet to decrypt values');
+      return;
+    }
+
+    if (!instance) {
+      setDecryptError('Encryption service unavailable');
+      return;
+    }
+
+    if (!decryptHandles.length) {
+      setDecryptError('No encrypted values available to decrypt');
+      return;
+    }
+
+    try {
+      setDecrypting(true);
+      setDecryptError(null);
+
+      const signer = await signerPromise;
+      if (!signer) {
+        throw new Error('Wallet signer unavailable');
       }
 
-      if (pendingHandle === ZERO_HANDLE) {
-        setPendingValue(0n);
-      } else if (!pendingHandle) {
-        setPendingValue(null);
+      const keypair = instance.generateKeypair();
+      const startTimestamp = Math.floor(Date.now() / 1000).toString();
+      const durationDays = '7';
+      const contractAddresses = Array.from(new Set(decryptHandles.map((item) => item.contractAddress)));
+
+      const eip712 = instance.createEIP712(
+        keypair.publicKey,
+        contractAddresses,
+        startTimestamp,
+        durationDays,
+      );
+
+      const signature = await signer.signTypedData(
+        eip712.domain,
+        {
+          UserDecryptRequestVerification: eip712.types.UserDecryptRequestVerification,
+        },
+        eip712.message,
+      );
+
+      const result = await instance.userDecrypt(
+        decryptHandles,
+        keypair.privateKey,
+        keypair.publicKey,
+        signature.replace('0x', ''),
+        contractAddresses,
+        accountAddress,
+        startTimestamp,
+        durationDays,
+      );
+
+      if (powerHandle) {
+        const decrypted = powerHandle === ZERO_HANDLE ? 0n : BigInt(result[powerHandle] ?? 0);
+        setPowerValue(decrypted);
       }
 
-      if (balanceHandle === ZERO_HANDLE || !balanceHandle) {
-        setBalanceValue(0n);
+      if (pendingHandle) {
+        const decrypted = pendingHandle === ZERO_HANDLE ? 0n : BigInt(result[pendingHandle] ?? 0);
+        setPendingValue(decrypted);
+      }
+
+      if (balanceHandle) {
+        const decrypted = balanceHandle === ZERO_HANDLE ? 0n : BigInt(result[balanceHandle] ?? 0);
+        setBalanceValue(decrypted);
       }
 
       setDecrypting(false);
-      setDecryptError(null);
-      lastDecryptionKeyRef.current = null;
-      return;
+    } catch (error) {
+      console.error('Failed to decrypt miner data:', error);
+      setDecrypting(false);
+      setDecryptError(error instanceof Error ? error.message : 'Unable to decrypt encrypted values');
     }
+  };
 
-    const handles = Array.from(handlesMap.values());
-    const handlesKey = JSON.stringify(handles.map((item) => item.handle));
-
-    if (handlesKey === lastDecryptionKeyRef.current) {
-      return;
-    }
-
-    lastDecryptionKeyRef.current = handlesKey;
-    setDecrypting(true);
-    setDecryptError(null);
-
-    let cancelled = false;
-
-    const run = async () => {
-      try {
-        const signer = await signerPromise;
-        if (!signer) {
-          throw new Error('Wallet signer unavailable');
-        }
-
-        const keypair = instance.generateKeypair();
-        const startTimestamp = Math.floor(Date.now() / 1000).toString();
-        const durationDays = '7';
-        const contractAddresses = Array.from(new Set(handles.map((item) => item.contractAddress)));
-
-        const eip712 = instance.createEIP712(
-          keypair.publicKey,
-          contractAddresses,
-          startTimestamp,
-          durationDays,
-        );
-
-        const signature = await signer.signTypedData(
-          eip712.domain,
-          {
-            UserDecryptRequestVerification: eip712.types.UserDecryptRequestVerification,
-          },
-          eip712.message,
-        );
-
-        const result = await instance.userDecrypt(
-          handles,
-          keypair.privateKey,
-          keypair.publicKey,
-          signature.replace('0x', ''),
-          contractAddresses,
-          accountAddress,
-          startTimestamp,
-          durationDays,
-        );
-
-        if (cancelled) {
-          return;
-        }
-
-        if (powerHandle) {
-          const decrypted = powerHandle === ZERO_HANDLE ? 0n : BigInt(result[powerHandle] ?? 0);
-          setPowerValue(decrypted);
-        }
-
-        if (pendingHandle) {
-          const decrypted = pendingHandle === ZERO_HANDLE ? 0n : BigInt(result[pendingHandle] ?? 0);
-          setPendingValue(decrypted);
-        }
-
-        if (balanceHandle) {
-          const decrypted = balanceHandle === ZERO_HANDLE ? 0n : BigInt(result[balanceHandle] ?? 0);
-          setBalanceValue(decrypted);
-        }
-
-        setDecrypting(false);
-      } catch (error) {
-        if (cancelled) {
-          return;
-        }
-        console.error('Failed to decrypt miner data:', error);
-        setDecrypting(false);
-        setDecryptError(error instanceof Error ? error.message : 'Unable to decrypt encrypted values');
-      }
-    };
-
-    void run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    accountAddress,
-    instance,
-    signerPromise,
-    powerHandle,
-    pendingHandle,
-    balanceHandle,
-  ]);
+  const canDecrypt = decryptHandles.length > 0 && !isInstanceLoading && Boolean(instance);
 
   const resetFeedback = () => setFeedback(null);
 
@@ -423,7 +398,20 @@ export function MinerApp() {
       {hasMiner && (
         <>
           <section className="section-card">
-            <h2 className="section-card__title">Miner Overview</h2>
+            <div className="section-card__header">
+              <h2 className="section-card__title">Miner Overview</h2>
+              <button
+                className="secondary-button"
+                onClick={handleDecryptValues}
+                disabled={!canDecrypt || decrypting}
+              >
+                {decrypting ? 'Decrypting…' : 'Decrypt Miner Data'}
+              </button>
+            </div>
+            <p className="section-card__description">
+              Your compute power and rewards stay encrypted until you decrypt them. Click the button to reveal the
+              latest confidential stats.
+            </p>
             <div className="stat-grid">
               <div className="stat-card">
                 <span className="stat-card__label">Compute Power</span>

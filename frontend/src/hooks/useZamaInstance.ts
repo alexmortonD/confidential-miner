@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { createInstance,initSDK,SepoliaConfig } from '@zama-fhe/relayer-sdk/bundle';
+import { createInstance, initSDK, SepoliaConfig, type FhevmInstance } from '@zama-fhe/relayer-sdk/bundle';
 
 export function useZamaInstance() {
-  const [instance, setInstance] = useState<any>(null);
+  const [instance, setInstance] = useState<FhevmInstance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,7 +13,7 @@ export function useZamaInstance() {
       try {
         setIsLoading(true);
         setError(null);
-        await initSDK()
+        await initSDK();
 
         const zamaInstance = await createInstance(SepoliaConfig);
 
