@@ -2,11 +2,11 @@
 pragma solidity ^0.8.27;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 import {FHE, euint16, euint64} from "@fhevm/solidity/lib/FHE.sol";
 import {ConfidentialZama} from "./ConfidentialZama.sol";
 
-contract MinerNFT is ERC721, SepoliaConfig {
+contract MinerNFT is ERC721, ZamaEthereumConfig {
     struct MinerState {
         bool miningActive;
         uint64 lastUpdate;
